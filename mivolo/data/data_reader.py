@@ -67,6 +67,8 @@ class InputType(Enum):
 
 
 def get_input_type(input_path: str) -> InputType:
+    if (input_path == 'cam'):
+        return InputType.Video
     if os.path.isdir(input_path):
         print("Input is a folder, only images will be processed")
         return InputType.Image

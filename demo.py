@@ -39,7 +39,6 @@ def get_local_video_info(vid_uri):
     fps = cap.get(cv2.CAP_PROP_FPS)
     return res, fps
 
-
 def get_parser():
     parser = argparse.ArgumentParser(description="PyTorch MiVOLO Inference")
     parser.add_argument("--input", type=str, default=None, required=True, help="image file or folder with images")
@@ -83,6 +82,12 @@ def main():
             if not args.input:
                 raise ValueError(f"Failed to get direct video url {args.input}")
             outfilename = os.path.join(args.output, f"out_{yid}.avi")
+        elif "cam" in args.input:
+            yid = 'cam'
+            args.input, res, fps = 'cam', (640, 480), 15.0
+            if not args.input:
+                raise ValueError(f"Failed to get cam {args.input}")
+            outfilename = os.path.join(args.output, f"out_{yid}.avi")
         else:
             bname = os.path.splitext(os.path.basename(args.input))[0]
             outfilename = os.path.join(args.output, f"out_{bname}.avi")
@@ -93,9 +98,15 @@ def main():
             out = cv2.VideoWriter(outfilename, fourcc, fps, res)
             _logger.info(f"Saving result to {outfilename}..")
 
-        for (detected_objects_history, frame) in predictor.recognize_video(args.input):
-            if args.draw:
-                out.write(frame)
+        if "cam" in args.input: 
+            for (detected_objects_history, frame) in predictor.recognize_video(args.input):
+                if args.draw:
+                    cv2.imshow('frame', frame)
+                    out.write(frame)
+        else:
+            for (detected_objects_history, frame) in predictor.recognize_video(args.input):
+                if args.draw:
+                    out.write(frame)
 
     elif input_type == InputType.Image:
         image_files = get_all_files(args.input) if os.path.isdir(args.input) else [args.input]

@@ -3,6 +3,7 @@ from typing import Dict, Generator, List, Optional, Tuple
 
 import cv2
 import numpy as np
+import time
 import tqdm
 from mivolo.model.mi_volo import MiVOLO
 from mivolo.model.yolo_detector import Detector
@@ -34,6 +35,42 @@ class Predictor:
         return detected_objects, out_im
 
     def recognize_video(self, source: str) -> Generator:
+        if (source == 'cam'):
+            fps = 15
+            start = time.time()
+            video_capture = cv2.VideoCapture(0)
+            detected_objects_history: Dict[int, List[AGE_GENDER_TYPE]] = defaultdict(list)
+            if not video_capture.isOpened():
+                raise ValueError(f"Failed to open {source}")
+            while True:
+                temppasse = time.time() - start
+
+                ret, frame = video_capture.read()
+
+                if not ret:
+                    print("error in retrieving frame")
+                    break
+
+                if temppasse > 1./fps:
+                    #img = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+                    start = time.time()
+                    detected_objects: PersonAndFaceResult = self.detector.track(frame)
+                    self.age_gender_model.predict(frame, detected_objects)
+                    current_frame_objs = detected_objects.get_results_for_tracking()
+                    cur_persons: Dict[int, AGE_GENDER_TYPE] = current_frame_objs[0]
+                    cur_faces: Dict[int, AGE_GENDER_TYPE] = current_frame_objs[1]
+                    for guid, data in cur_persons.items():
+                        detected_objects_history[guid].append(data)
+                    for guid, data in cur_faces.items():
+                        detected_objects_history[guid].append(data)
+                    detected_objects.set_tracked_age_gender(detected_objects_history)
+                    if self.draw:
+                        frame = detected_objects.plot()
+                    yield detected_objects_history, frame
+                    #cv2.imshow('frame', frame)
+
+                if cv2.waitKey(1) == ord('q'):
+                    break
         video_capture = cv2.VideoCapture(source)
         if not video_capture.isOpened():
             raise ValueError(f"Failed to open video source {source}")
