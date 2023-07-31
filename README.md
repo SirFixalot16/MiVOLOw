@@ -239,6 +239,17 @@ python3 demo.py \
 --with-persons
 ```
 
+To run cam:
+```bash
+python3 demo.py \
+--input "cam" \
+--output "output" \
+--detector-weights "models/yolov8x_person_face.pt" \
+--checkpoint "models/mivolo_imbd.pth.tar" \
+--device "cuda:0" \
+--draw \
+--with-persons
+```
 
 ## Validation
 
